@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دردشة فيديو عشوائية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%;
+            background-color: #0f0f0f;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .control-btn.end-call {
+            background: #ff4d4d;
+        }
+        
+        .control-btn.end-call:hover {
+            background: #ff3333;
+        }
+        
+        .loading-animation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .loading-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4f46e5;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+        
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .interest-btn {
+            border: 2px solid #4f46e5;
+            color: #4f46e5;
+            transition: all 0.3s ease;
+        }
+        
+        .interest-btn:hover {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .interest-btn.selected {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .chat-message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+        }
+        
+        .received {
+            background: #4f46e5;
+            border-bottom-right-radius: 0;
+            align-self: flex-start;
+        }
+        
+        .sent {
+            background: #3a3a3a;
+            border-bottom-left-radius: 0;
+            align-self: flex-end;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4">
+    <div id="app" class="w-full max-w-4xl">
+        <!-- شاشة البداية -->
+        <div id="start-screen" class="text-center">
+            <h1 class="text-4xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">
+                دردشة فيديو عشوائية
+            </h1>
+            <p class="text-lg mb-8 text-gray-300">
+                تواصل مع أشخاص جدد من حول العالم عبر الدردشة المرئية العشوائية
+            </p>
+            
+            <div class="mb-10">
+                <div class="video-container mb-6 flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-user-circle text-6xl text-gray-500 mb-3"></i>
+                        <p class="text-gray-400">سيتم عرض الفيديو الخاص بك هنا</p>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mb-8">
+                    <button id="start-btn" class="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-8 py-3 rounded-full text-lg font-semibold hover:from-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-lg">
+                        ابدأ الدردشة الآن
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4">اختر اهتماماتك (اختياري)</h3>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button class="interest-btn px-4 py-2 rounded-full">ألعاب</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">موسيقى</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">رياضة</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">فن</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">تكنولوجيا</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">سفر</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">أفلام</button>
+                    <button class="interest-btn px-4 py-2 rounded-full">تعليم</button>
+                </div>
+            </div>
+            
+            <div class="text-gray-400 text-sm">
+                <p>بالضغط على "ابدأ الدردشة الآن"، فإنك توافق على <a href="#" class="text-blue-400">شروط الخدمة</a> و<a href="#" class="text-blue-400">سياسة الخصوصية</a></p>
+            </div>
+        </div>
+        
+        <!-- شاشة التحميل -->
+        <div id="loading-screen" class="text-center hidden">
+            <h2 class="text-2xl font-semibold mb-6">جاري البحث عن شخص للدردشة...</h2>
+            
+            <div class="video-container mb-8 flex items-center justify-center">
+                <div class="text-center">
+                    <div class="loading-animation">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <p class="text-gray-400 mt-8">جاري الاتصال بالخادم...</p>
+                </div>
+            </div>
+            
+            <button id="cancel-btn" class="bg-gray-700 text-white px-6 py-2 rounded-full hover:bg-gray-600 transition">
+                إلغاء
+            </button>
+        </div>
+        
+        <!-- شاشة الدردشة -->
+        <div id="chat-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">دردشة مع شخص جديد</h2>
+                <div class="flex items-center gap-2">
+                    <span id="timer" class="bg-gray-800 px-3 py-1 rounded-full">00:00</span>
+                    <button id="report-btn" class="text-red-400 hover:text-red-300">
+                        <i class="fas fa-flag"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="video-container mb-4">
+                <video id="remote-video" autoplay playsinline></video>
+                <video id="local-video" autoplay playsinline muted class="absolute bottom-4 right-4 w-1/4 h-auto rounded-lg border-2 border-white shadow-lg"></video>
+                
+                <div class="controls">
+                    <button id="mute-btn" class="control-btn">
+                        <i class="fas fa-microphone text-white"></i>
+                    </button>
+                    <button id="video-btn" class="control-btn">
+                        <i class="fas fa-video text-white"></i>
+                    </button>
+                    <button id="end-call-btn" class="control-btn end-call">
+                        <i class="fas fa-phone-slash text-white"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="chat-container" class="bg-gray-800 rounded-lg p-4 mb-4 h-48 overflow-y-auto flex flex-col">
+                <!-- الرسائل تظهر هنا -->
+                <div class="chat-message received">
+                    مرحبا! كيف حالك اليوم؟
+                </div>
+                <div class="chat-message sent">
+                    أنا بخير، شكراً لك! كيف حالك أنت؟
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <input id="message-input" type="text" placeholder="اكتب رسالة هنا..." class="flex-grow bg-gray-700 text-white px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button id="send-btn" class="bg-purple-600 text-white px-4 py-2 rounded-full hover:bg-purple-700 transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // عناصر DOM
+        const startScreen = document.getElementById('start-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const startBtn = document.getElementById('start-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const endCallBtn = document.getElementById('end-call-btn');
+        const muteBtn = document.getElementById('mute-btn');
+        const videoBtn = document.getElementById('video-btn');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatContainer = document.getElementById('chat-container');
+        const timer = document.getElementById('timer');
+        const interestBtns = document.querySelectorAll('.interest-btn');
+        
+        // متغيرات الحالة
+        let isMuted = false;
+        let isVideoOff = false;
+        let callTimer = 0;
+        let timerInterval;
+        
+        // اختيار الاهتمامات
+        interestBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+            });
+        });
+        
+        // بدء الدردشة
+        startBtn.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            loadingScreen.classList.remove('hidden');
+            
+            // محاكاة البحث عن شخص (في الواقع سيكون اتصال WebRTC)
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                chatScreen.classList.remove('hidden');
+                startTimer();
+                
+                // محاكاة بث الفيديو (في الواقع سيكون getUserMedia)
+                document.getElementById('local-video').srcObject = getDummyVideoStream();
+                document.getElementById('remote-video').srcObject = getDummyVideoStream();
+            }, 3000);
+        });
+        
+        // إلغاء البحث
+        cancelBtn.addEventListener('click', () => {
+            loadingScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+        
+        // إنهاء المكالمة
+        endCallBtn.addEventListener('click', () => {
+            chatScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            stopTimer();
+            
+            // إيقاف بث الفيديو (في الواقع سيكون stopStream)
+            document.getElementById('local-video').srcObject = null;
+            document.getElementById('remote-video').srcObject = null;
+        });
+        
+        // كتم الصوت
+        muteBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            muteBtn.innerHTML = isMuted ? 
+                '<i class="fas fa-microphone-slash text-white"></i>' : 
+                '<i class="fas fa-microphone text-white"></i>';
+            
+            // في الواقع سيكون هنا muteTrack
+        });
+        
+        // تشغيل/إيقاف الفيديو
+        videoBtn.addEventListener('click', () => {
+            isVideoOff = !isVideoOff;
+            videoBtn.innerHTML = isVideoOff ? 
+                '<i class="fas fa-video-slash text-white"></i>' : 
+                '<i class="fas fa-video text-white"></i>';
+            
+            // في الواقع سيكون هنا enable/disable video track
+            document.getElementById('local-video').style.display = isVideoOff ? 'none' : 'block';
+        });
+        
+        // إرسال رسالة
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'chat-message sent';
+                messageElement.textContent = message;
+                chatContainer.appendChild(messageElement);
+                messageInput.value = '';
+                
+                // التمرير إلى الأسفل لرؤية الرسالة الجديدة
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // محاكاة الرد (في الواقع سيكون peer connection)
+                setTimeout(() => {
+                    const replies = [
+                        "هذا مثير للاهتمام!",
+                        "نعم، أوافقك الرأي",
+                        "ماذا تعني بذلك؟",
+                        "لم أفهم تماماً، هل يمكنك التوضيح؟",
+                        "هذا رائع!",
+                        "أنا أستمتع بهذه المحادثة",
+                        "هل لديك أي اهتمامات أخرى؟"
+                    ];
+                    const reply = replies[Math.floor(Math.random() * replies.length)];
+                    
+                    const replyElement = document.createElement('div');
+                    replyElement.className = 'chat-message received';
+                    replyElement.textContent = reply;
+                    chatContainer.appendChild(replyElement);
+                    
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 1000 + Math.random() * 2000);
+            }
+        }
+        
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        // مؤقت المكالمة
+        function startTimer() {
+            callTimer = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                callTimer++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(callTimer / 60).toString().padStart(2, '0');
+            const seconds = (callTimer % 60).toString().padStart(2, '0');
+            timer.textContent = `${minutes}:${seconds}`;
+        }
+        
+        // محاكاة دفق الفيديو (لأغراض العرض فقط)
+        function getDummyVideoStream() {
+            // في الواقع سيكون هنا getUserMedia
+            return null;
+        }
+        
+        // في تطبيق حقيقي، ستحتاج إلى:
+        // 1. تنفيذ WebRTC للاتصال المباشر
+        // 2. استخدام STUN/TURN servers للاتصال عبر NAT
+        // 3. تنفيذ signaling server لتنسيق الاتصال
+        // 4. إدارة حالة الاتصال والأخطاء
+    </script>
+</body>
+</html>
